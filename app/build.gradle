@@ -1,0 +1,157 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "25.0.0"
+    defaultConfig {
+        applicationId "com.gradletask"
+        minSdkVersion 14
+        targetSdkVersion 25
+        versionCode VERSION_CODE.toInteger()
+        versionName VERSION_NAME
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        buildConfigField "String", "SERVER_CFG", "\"${SERVER_CFG}\""  //是否测试版本
+
+
+
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+
+        debug {
+            buildConfigField "String", "SERVER_CFG", "\"${SERVER_CFG}\""  //是否测试版本
+
+
+
+        }
+
+        local {
+            buildConfigField "String", "SERVER_CFG", "\"${SERVER_CFG}\""  //是否测试版本
+
+
+        }
+    }
+
+    // 不同报名产品
+    productFlavors {
+        product {
+            applicationId = 'com.gjl.gradletest'
+            manifestPlaceholders = [UMENG_CHANNEL_VALUE: "CHSDY"]
+        }
+
+    }
+
+    android.applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            def apkTime = releaseTime()
+            def file = output.outputFile
+            def versionName = defaultConfig.versionName
+
+
+            def outputFile = output.outputFile
+            if (outputFile != null && outputFile.name.endsWith('.apk')) {
+
+//                def fileName = outputFile.name.replace(".apk", "_"+apkTime+".apk")
+//                output.outputFile = new File(outputFile.parent, fileName)
+
+                def fileName = "app_${releaseTime()}_${variant.productFlavors[0].name}_${SERVER_CFG}.apk"
+                output.outputFile = new File(outputFile.parent, fileName)
+
+
+            }
+        }
+    }
+
+
+    sourceSets {
+        main {
+           // manifest.srcFile 'AndroidManifest.xml'
+//            java.srcDirs = ['src']
+//
+//            resources.srcDirs = ['src']
+//            aidl.srcDirs = ['src']
+//
+//            renderscript.srcDirs = ['src']
+//
+//            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+//
+//            jniLibs.srcDirs = ['libs']
+//
+//            jni.srcDirs 'jni'
+        }
+    }
+
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    compile 'com.android.support:appcompat-v7:25.0.1'
+    testCompile 'junit:junit:4.12'
+}
+
+
+task changePushServer << {
+    def assetDir= new File(project.projectDir.absolutePath+"/asset")
+
+    if(!assetDir.exists()){
+
+        assetDir.mkdirs()
+    }
+
+    def serverCfgDir=new File(assetDir.absolutePath+"/serverCfg.txt")
+
+    if(!serverCfgDir.exists()){
+
+        serverCfgDir.createNewFile()
+    }
+    serverCfgDir.text=SERVER_CFG
+
+
+}
+
+preBuild.dependsOn changePushServer
+
+
+//def changePushServer(server){
+//    def assetDir= new File(project.projectDir.absolutePath+"/asset")
+//
+//    if(!assetDir.exists()){
+//
+//        assetDir.mkdirs()
+//    }
+//
+//    def serverCfgDir=new File(assetDir.absolutePath+"/serverCfg.txt")
+//
+//    if(!serverCfgDir.exists()){
+//
+//        serverCfgDir.createNewFile()
+//    }
+//    serverCfgDir.text=server
+//
+//
+//}
+
+//tasks.whenTaskAdded { task ->
+//
+//    println task.name
+//    if (task.name == 'assembleDebug') {
+//        changePushServer("prepare")
+//    }
+//    if(task.name =='assembleRelease') {
+//        changePushServer("formal")
+//    }
+//
+//}
+
+
+
+def releaseTime() {
+    return new Date().format("MMdd", TimeZone.getTimeZone("UTC"))
+}
